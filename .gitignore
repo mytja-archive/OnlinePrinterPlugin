@@ -130,3 +130,6 @@ dmypy.json
 
 # Templating
 templates/
+
+# VS code
+.vscode/

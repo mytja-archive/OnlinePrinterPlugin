@@ -4,6 +4,45 @@ import serial
 class OnlinePrinter(octoprint.plugin.BlueprintPlugin, octoprint.plugin.StartupPlugin):
     ser = None
 
+    def initPort(self):
+        hasInitilized = False
+
+        try:
+            self.ser = serial.Serial("/dev/ttyUSB0", 115200, timeout=1)
+            print("Initilized port /dev/ttyUSB0")
+            hasInitilized = True
+        except:
+            try:
+                self.ser = serial.Serial("/dev/ttyUSB1", 115200, timeout=1)
+                print("Initilized port /dev/ttyUSB1")
+                hasInitilized = True
+            except:
+                try:
+                    self.ser = serial.Serial("/dev/ttyACM0", 115200, timeout=1)
+                    print("Initilized port /dev/ttyACM0")
+                    hasInitilized = True
+                except:
+                    try:
+                        self.ser = serial.Serial("/dev/ttyACM1", 115200, timeout=1)
+                        print("Initilized port /dev/ttyACM1")
+                        hasInitilized = True
+                    except:
+                        self.ser = None
+                        hasInitilized = False
+        
+        if not hasInitilized:
+            for i in range(12):
+                try:
+                    self.ser = serial.Serial("COM" + str(i), 115200, timeout=1)
+                    print("Initilized port COM" + str(i))
+                    hasInitilized = True
+                    break
+                except:
+                    print("Failed to initilize port COM" + str(i))
+        
+        if not hasInitilized:
+            raise IOError("Failed to initilize port")
+
     @octoprint.plugin.BlueprintPlugin.route("/ledon", methods=["GET"])
     def ledON(self):
         if self.ser:
@@ -35,11 +74,9 @@ class OnlinePrinter(octoprint.plugin.BlueprintPlugin, octoprint.plugin.StartupPl
     def on_startup(self, *args, **kwargs):
         print("[OnlinePrinterPlugin] Starting OnlinePrinterPlugin...")
         try:
-            self.ser = serial.Serial('COM1')
+            self.initPort()
         except Exception as e:
-            print("[OnlinePrinterPlugin] Failed to initilize COM port")
-            print(e)
-            return None
+            raise IOError("[OnlinePrinterPlugin] Failed to initilize port")
         print("[OnlinePrinterPlugin] Successfully initilized COM port")
         print("[OnlinePrinterPlugin] OnlinePrinterPlugin has successfully started.")
 
